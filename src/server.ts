@@ -4,13 +4,16 @@ import invoicesRoutes from "./routes/invoicesRoutes";
 import { validateReqBody } from "./middle_wares/validate";
 import cors from "cors";
 
-const PORT = 8001;
-
 const app = express();
+
+const PORT = process.env.PORT || 8001;
 
 app.use(express.json());
 app.use(cors({ origin: "http://localhost:3000" }));
 app.use(validateReqBody);
+
+//middleware for allowing access to static files like images, css etc. from the public folder
+app.use("/images", express.static("public/images"));
 
 app.get("/", (req: Request, res: Response) => {
   res.send(`Server is running. Try GET /api/clients`);
