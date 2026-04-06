@@ -10,7 +10,7 @@ export default defineConfig({
   },
   datasource: {
     url:
-      env("ENVIROMENT") === "dev"
+      env("ENVIRONMENT") === "dev"
         ? env("DEV_DATABASE_URL")
         : env("DATABASE_URL"),
   },
