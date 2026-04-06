@@ -9,7 +9,7 @@ const app = express();
 const PORT = process.env.PORT || 8001;
 
 app.use(express.json());
-app.use(cors({ origin: "http://localhost:3000" }));
+app.use(cors({ origin: "*", optionsSuccessStatus: 200 }));
 app.use(validateReqBody);
 
 //middleware for allowing access to static files like images, css etc. from the public folder
