@@ -1,7 +1,7 @@
 import express, { type Request, type Response } from "express";
 import clientsRoutes from "./routes/clientsRoutes";
-import invoicesRoutes from "./routes/invoicesRoutes";
-import { validateReqBody } from "./middle_wares/validate";
+import invoicesRoutes from "./routes/invoicesRoutes.js";
+import { validateReqBody } from "./middle_wares/validate.js";
 import cors from "cors";
 
 const app = express();
