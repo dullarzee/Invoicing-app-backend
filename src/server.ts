@@ -23,7 +23,7 @@ app.get("/", (req: Request, res: Response) => {
     "prod: ",
     process.env.DATABASE_URL,
     "env: ",
-    process.env.ENVIROMENT,
+    process.env.ENVIRONMENT,
   );
 
   res.send(`Server is running. Try GET /api/clients`);
