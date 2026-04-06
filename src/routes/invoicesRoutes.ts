@@ -7,6 +7,16 @@ const router = Router();
 
 let browser: Browser | null = null;
 
+console.log(
+  "urls: ",
+  "dev: ",
+  process.env.DEV_DATABASE_URL,
+  "prod: ",
+  process.env.PROD_DATABASE_URL,
+  "env: ",
+  process.env.ENVIROMENT,
+);
+
 const getFormattedDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString("en-US", {
     year: "numeric",
@@ -366,6 +376,16 @@ const generateInvoiceHTML = (invoiceData: any) => {
 // api/invoices/
 //get all invoices
 router.get("/", async (_req: Request, res: Response) => {
+  console.log(
+    "urls: ",
+    "dev: ",
+    process.env.DEV_DATABASE_URL,
+    "prod: ",
+    process.env.PROD_DATABASE_URL,
+    "env: ",
+    process.env.ENVIROMENT,
+  );
+
   try {
     const response = await prisma.invoice.findMany({
       include: {

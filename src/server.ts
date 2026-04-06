@@ -16,6 +16,16 @@ app.use(validateReqBody);
 app.use("/images", express.static("public/images"));
 
 app.get("/", (req: Request, res: Response) => {
+  console.log(
+    "urls: ",
+    "dev: ",
+    process.env.DEV_DATABASE_URL,
+    "prod: ",
+    process.env.PROD_DATABASE_URL,
+    "env: ",
+    process.env.ENVIROMENT,
+  );
+
   res.send(`Server is running. Try GET /api/clients`);
 });
 
