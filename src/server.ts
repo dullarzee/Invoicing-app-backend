@@ -1,5 +1,5 @@
 import express, { type Request, type Response } from "express";
-import clientsRoutes from "./routes/clientsRoutes";
+import clientsRoutes from "./routes/clientsRoutes.js";
 import invoicesRoutes from "./routes/invoicesRoutes.js";
 import { validateReqBody } from "./middle_wares/validate.js";
 import cors from "cors";
