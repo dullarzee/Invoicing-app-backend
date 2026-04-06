@@ -12,15 +12,6 @@ export default defineConfig({
     url:
       env("ENVIROMENT") === "dev"
         ? env("DEV_DATABASE_URL")
-        : env("PROD_DATABASE_URL"),
+        : env("DATABASE_URL"),
   },
 });
-console.log(
-  "urls: ",
-  "dev: ",
-  env("DEV_DATABASE_URL"),
-  "prod: ",
-  env("PROD_DATABASE_URL"),
-  "env: ",
-  env("ENVIROMENT"),
-);
