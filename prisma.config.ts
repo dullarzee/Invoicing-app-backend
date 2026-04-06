@@ -15,3 +15,12 @@ export default defineConfig({
         : env("PROD_DATABASE_URL"),
   },
 });
+console.log(
+  "urls: ",
+  "dev: ",
+  env("DEV_DATABASE_URL"),
+  "prod: ",
+  env("PROD_DATABASE_URL"),
+  "env: ",
+  env("ENVIROMENT"),
+);
