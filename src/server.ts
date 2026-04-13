@@ -3,6 +3,7 @@ import clientsRoutes from "./routes/clientsRoutes.js";
 import invoicesRoutes from "./routes/invoicesRoutes.js";
 import { validateReqBody } from "./middle_wares/validate.js";
 import cors from "cors";
+import { initBrowser, closeBrowser } from "./lib/utils.js";
 
 const app = express();
 
@@ -16,16 +17,6 @@ app.use(validateReqBody);
 app.use("/images", express.static("public/images"));
 
 app.get("/", (req: Request, res: Response) => {
-  console.log(
-    "urls: ",
-    "dev: ",
-    process.env.DEV_DATABASE_URL,
-    "prod: ",
-    process.env.DATABASE_URL,
-    "env: ",
-    process.env.ENVIRONMENT,
-  );
-
   res.send(`Server is running. Try GET /api/clients`);
 });
 
@@ -34,4 +25,21 @@ app.use("/api/clients", clientsRoutes);
 // invoice routes
 app.use("/api/invoices", invoicesRoutes);
 
-app.listen(PORT, () => console.log(`Server started at port ${PORT}`));
+const server = app.listen(PORT, async () => {
+  console.log(`Server started at port ${PORT}`);
+  await initBrowser();
+});
+
+// Graceful shutdown handlers
+const gracefulShutdown = async () => {
+  console.log("[SHUTDOWN] Received shutdown signal...");
+  server.close(async () => {
+    console.log("[SHUTDOWN] Server closed");
+    await closeBrowser();
+    process.exit(0);
+  });
+};
+
+// Handle shutdown signals
+process.on("SIGTERM", gracefulShutdown);
+process.on("SIGINT", gracefulShutdown);

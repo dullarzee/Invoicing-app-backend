@@ -32,6 +32,41 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
+router.get("/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { includeInvoices } = req.query;
+  if (!id)
+    return res
+      .status(400)
+      .json({ error: "Client id must be provided in the url params" });
+
+  try {
+    const client = await prisma.client.findUnique({
+      where: {
+        id: id as string,
+      },
+      include: {
+        invoices:
+          includeInvoices === "true"
+            ? {
+                include: {
+                  lineItems: true,
+                },
+              }
+            : false,
+      },
+    });
+    if (!client)
+      return res.json({ message: "Client not found", ok: false, data: client });
+
+    return res.json({ message: "Client fetched", ok: true, data: client });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ error: "An error occurred while fetching client", ok: false });
+  }
+});
+
 // api/clients/create
 router.post("/create", async (req: Request, res: Response) => {
   const { companyName, email, phoneNumber, name } = req.body;

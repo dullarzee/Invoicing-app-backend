@@ -1,21 +1,8 @@
-import { Router } from "express";
 import prisma from "../prismaInit.js";
-import { type Request, type Response } from "express";
-import puppeteer, { Browser } from "puppeteer";
+import { Router, type Request, type Response } from "express";
+import { getPlaywrightBrowser } from "../lib/utils.js";
 
 const router = Router();
-
-let browser: Browser | null = null;
-
-console.log(
-  "urls: ",
-  "dev: ",
-  process.env.DEV_DATABASE_URL,
-  "prod: ",
-  process.env.PROD_DATABASE_URL,
-  "env: ",
-  process.env.ENVIROMENT,
-);
 
 const getFormattedDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString("en-US", {
@@ -40,18 +27,12 @@ const separateThousands = (amount: number) => {
   });
 };
 
-const getPuppeteerBrowser = async () => {
-  //if browser is not initialized, initialize it and return a new page, else return a new page from the existing browser instance
-  if (!browser) {
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
-    return browser.newPage();
-  }
-  browser = await puppeteer.launch();
-  return browser.newPage();
-};
+const prodOptimization =
+  process.env.ENVIRONMENT !== "dev"
+    ? {
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      }
+    : {};
 
 const generateInvoiceHTML = (invoiceData: any) => {
   const { client, lineItems, ...invoice } = invoiceData;
@@ -435,7 +416,10 @@ router.get("/downloadPDF/:id", async (req: Request, res: Response) => {
       .status(400)
       .json({ error: "Invoice id must be provided in the url params" });
 
+  let page = null;
+
   try {
+    console.log(`[PDF] Fetching invoice: ${id}`);
     const response = await prisma.invoice.findUnique({
       where: {
         id: id as string,
@@ -446,28 +430,68 @@ router.get("/downloadPDF/:id", async (req: Request, res: Response) => {
       },
     });
 
+    console.log("[PDF] Invoice fetched");
+
     if (!response)
       return res
         .status(404)
         .json({ message: "Invoice not found", ok: false, data: response });
 
-    const page = await getPuppeteerBrowser();
-    await page.setContent(generateInvoiceHTML(response), {
+    console.log("[PDF] Getting browser instance...");
+    const browserInstance = await getPlaywrightBrowser();
+
+    if (!browserInstance) {
+      throw new Error("Failed to initialize browser instance");
+    }
+
+    console.log("[PDF] Browser instance ready");
+    console.log("[PDF] Creating new page...");
+
+    page = await browserInstance.newPage();
+    console.log("[PDF] Page created successfully");
+
+    const htmlContent = generateInvoiceHTML(response);
+    console.log("[PDF] HTML content generated, setting page content...");
+
+    await page.setContent(htmlContent, {
       waitUntil: "domcontentloaded",
     });
+
+    console.log("[PDF] Page content set, generating PDF...");
     const pdfBuffer = await page.pdf({ format: "A4", printBackground: true });
-    await page.close();
-    await browser?.close();
+    console.log("[PDF] PDF generated successfully");
 
     res.set({
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename=invoice_${response.id}.pdf`,
+      "Content-Disposition": `attachment; filename=invoice_${response.client.companyName.replace(/[^a-z0-9]/gi, "_")}.pdf`,
     });
-    res.send(pdfBuffer).status(200);
+
+    res.status(200).send(pdfBuffer);
+    console.log("[PDF] PDF sent to client successfully");
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "An error occurred while generating the PDF" });
+    console.error("[PDF] Error during PDF generation:", error);
+
+    // Log detailed error info
+    if (error instanceof Error) {
+      console.error("[PDF] Error message:", error.message);
+      console.error("[PDF] Error stack:", error.stack);
+    }
+
+    res.status(500).json({
+      error: "An error occurred while generating the PDF",
+      details: error instanceof Error ? error.message : String(error),
+    });
+  } finally {
+    // Always clean up the page
+    if (page) {
+      try {
+        console.log("[PDF] Closing page...");
+        await page.close();
+        console.log("[PDF] Page closed successfully");
+      } catch (closeError) {
+        console.error("[PDF] Error closing page:", closeError);
+      }
+    }
   }
 });
 
